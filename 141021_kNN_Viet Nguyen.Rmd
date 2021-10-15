@@ -1,0 +1,125 @@
+---
+title: "Assigment - kNN Occupancy Detection"
+author:
+- name author here - "Viet Nguyen"
+- name reviewer here - "Levy Londa"
+date: "`r format(Sys.time(), '%d %B, %Y')`"
+output:
+  html_notebook:
+    toc: yes
+    toc_depth: 2
+  word_document:
+    toc: yes
+    toc_depth: '2'
+---
+
+
+```{r}
+library(tidyverse)
+library(googlesheets4)
+library(class)
+library(caret)
+```
+
+---
+
+Choose a suitable dataset from [this](https://github.com/HAN-M3DM-Data-Mining/assignments/tree/master/datasets) folder and train  your own kNN model. Follow all the steps from the CRISP-DM model.
+
+
+## Business Understanding
+Research shows that an appropriate implementation of rooms' vacancy detection in buildings can reduce energy in the approximate range of 30% to 42%. As sensors are becoming more affordable and prevalent in buildings, along with computing power for automation processes became more economical. These factors have sparked a promising and productive approach to lower energy consumption, via buildings' HVAC and lighting systems. Though the application of occupancy detection is not merely limited to energy-efficient objective, but also expands towards security and privacy matters.
+
+## Data Understanding
+```{r}
+url <- "https://raw.githubusercontent.com/HAN-M3DM-Data-Mining/assignments/master/datasets/KNN-occupancy.csv"
+rawDF <- read_csv(url)
+str(rawDF)
+```
+
+## Data Preparation
+```{r}
+cleanDF <- rawDF[-1]
+head(cleanDF)
+```
+```{r}
+cntOcc <- table(cleanDF$Occupancy)
+propOcc <- round(prop.table(cntOcc) * 100 , digits = 1)
+
+cntOcc
+propOcc
+```
+```{r}
+cleanDF$Occupancy <- factor(cleanDF$Occupancy, levels = c("0", "1"), labels = c("Non-occupied", "Occupied")) %>% relevel("Occupied")
+head(cleanDF, 10)
+```
+
+```{r}
+summary(cleanDF[c("Temperature", "HumidityRatio", "Light")])
+```
+```{r}
+normalize <- function(x) {
+  return((x-min(x)) / (max(x)-min(x)))
+}
+testSet1 <- c(1:5)
+testSet2 <- c(1:5) * 10
+
+cat("testSet1:", testSet1, "\n")
+
+```
+```{r}
+cat("testSet2:", testSet2, "\n")
+```
+```{r}
+cat("Normalized testSet1:", normalize(testSet1), "\n")
+
+```
+
+```{r}
+cat("Normalized testSet2:", normalize(testSet2))
+
+```
+
+```{r}
+cleanDF_n <- sapply(1:5, 
+                    function(x) {
+  normalize(cleanDF[,x])
+}) %>% as.data.frame()
+
+summary(cleanDF_n[c("Temperature", "HumidityRatio", "Light")])
+
+
+```
+
+```{r}
+trainDF_feat <- cleanDF_n[1:5999,  ]
+testDF_feat <- cleanDF_n[6000:8143,  ]
+```
+
+```{r}
+trainDF_labels <- cleanDF[1:5999,  6]
+testDF_labels <- cleanDF[6000:8143,  6]
+```
+
+
+## Modeling
+```{r}
+cleanDF_test_pred <- knn(train = as.matrix(trainDF_feat), test = as.matrix(testDF_feat), cl = as.matrix(trainDF_labels), k = 21)
+head(cleanDF_test_pred)
+```
+
+```{r}
+confusionMatrix(cleanDF_test_pred, testDF_labels[[1]], positive = NULL, dnn = c("Prediction", "True"))
+
+```
+
+## Evaluation and Deployment
+The model performs well, with accuracy rate of approximately 90% which means only one, out of ten predictions, does the model fail to speculate. The sensitivity rate tells us when a room is occupied, 80% of the time the prediction anticipates correctly. On the other hand, the specificity dictates when the room isn't occupied, approximately 93% of the time predicts correctly.
+
+So, how do these insights shed light into our problem, and how we can capitalize on these information? With the specificity rate of 93%, buildings can further drive down electricity and energy-related costs by correctly identify whether a room is vacant or not, and adjust the HVAC accordingly. With the slightly lower sensitivity rate, the building can turn on the power and AC when people comes inside the room. Nevertheless, with an error rate of 20%, from my perspective, the model must improve further to eventually get implemented for privacy and security issues. In conclusion, the room occupancy model appears as an extremely effective mechanism to help buildings become energy-efficient and provides safer privacy to occupants.
+
+## Reviewer adds suggestions for improving the model
+
+reviewer do not have suggestion to improve model and coding of QV Nguyen. The coding follows the proper step. Author shows high understanding of the data and its context. The process that the author have done in line with the instruction. 
+
+The author also clearly shows understanding and clear elaboration of confusion matrix in which shows that the model is accurate and works well for predicting the dataset.
+
